@@ -26,6 +26,16 @@
 <body class="bg-slate-950 text-slate-100">
   <div id="root"></div>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker Kayıt Başarılı:', reg.scope))
+          .catch(err => console.log('Service Worker Kayıt Hatası:', err));
+      });
+    }
+  </script>
+
   <script type="module">
     import { initializeApp } from 'firebase/app';
     import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
@@ -227,10 +237,20 @@
             if ("Notification" in window && Notification.permission === "granted") {
               const latestOrder = ordersList.find(o => o.status === 'Bekliyor');
               if (latestOrder) {
-                new Notification("☕ Yeni Askeri Çay Siparişi!", {
-                  body: `${latestOrder.customerRank} ${latestOrder.customerName}\nKonum: ${latestOrder.location} (${latestOrder.totalAmount} ₺)`,
-                  icon: "https://cdn-icons-png.flaticon.com/512/924/924514.png"
-                });
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification("☕ Yeni Askeri Çay Siparişi!", {
+                      body: `${latestOrder.customerRank} ${latestOrder.customerName}\nKonum: ${latestOrder.location} (${latestOrder.totalAmount} ₺)`,
+                      icon: "https://cdn-icons-png.flaticon.com/512/924/924514.png",
+                      tag: 'cay-siparis'
+                    });
+                  });
+                } else {
+                  new Notification("☕ Yeni Askeri Çay Siparişi!", {
+                    body: `${latestOrder.customerRank} ${latestOrder.customerName}\nKonum: ${latestOrder.location} (${latestOrder.totalAmount} ₺)`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/924/924514.png"
+                  });
+                }
               }
             }
           }
@@ -571,7 +591,6 @@
                   {isCloudConnected ? <Wifi size={14} /> : <WifiOff size={14} className="animate-pulse" />}
                 </div>
 
-                {/* Bildirim İzin Butonu (Zil) */}
                 <button 
                   onClick={requestNotificationPermission}
                   className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-amber-400 hover:text-white transition-all shadow"

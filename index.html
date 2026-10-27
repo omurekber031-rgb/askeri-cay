@@ -208,7 +208,7 @@
         }
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
-          alert("Bildirimler başarıyla aktif edildi! Çaycı panelindeyken yeni siparişlerde bildirim alacaksınız.");
+          alert("Bildirimler başarıyla aktif edildi!");
         } else {
           alert("Bildirim izni verilmedi.");
         }
@@ -320,18 +320,6 @@
           return [...prev, { ...product, qty: 1 }];
         });
       };
-
-      const removeFromCart = (productId) => {
-        setCart(prev => {
-          const existing = prev.find(item => item.id === productId);
-          if (existing && existing.qty > 1) {
-            return prev.map(item => item.id === productId ? { ...item, qty: item.qty - 1 } : item);
-          }
-          return prev.filter(item => item.id !== productId);
-        });
-      };
-
-      const clearCart = () => setCart([]);
 
       const getTotalCartAmount = () => {
         return cart.reduce((total, item) => total + (item.price * item.qty), 0);
@@ -565,7 +553,7 @@
       };
 
       return (
-        <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} font-sans pb-24 transition-colors duration-200 select-none`}>
+        <div className={`min-h-screen ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} font-sans pb-36 transition-colors duration-200 select-none`}>
           
           <header className={`${darkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-emerald-800 text-white'} backdrop-blur-md sticky top-0 z-40 border-b px-3 py-2.5 shadow-md`}>
             <div className="max-w-md mx-auto flex justify-between items-center gap-1">
@@ -668,110 +656,56 @@
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5">
-                  {displayedProducts.map(product => (
-                    <div 
-                      key={product.id} 
-                      className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                        !product.available 
-                          ? (darkMode ? 'bg-slate-900/40 border-slate-800/60 opacity-50' : 'bg-slate-200/60 border-slate-300 opacity-60') 
-                          : (darkMode ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 shadow-sm')
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl p-2 bg-slate-800/40 rounded-xl border border-slate-700/30">{product.icon}</span>
-                        <div>
-                          <h3 className="font-bold text-sm leading-snug">{product.name}</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs font-extrabold text-emerald-400 font-mono">{product.price} ₺</span>
-                            <span className="text-[10px] text-slate-400">({product.category})</span>
-                          </div>
-                        </div>
-                      </div>
+                {/* Kare ve orta boyutta 2 sütunlu ürün grid yapısı */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {displayedProducts.map(product => {
+                    const cartItem = cart.find(i => i.id === product.id);
+                    const qty = cartItem ? cartItem.qty : 0;
 
-                      <div>
-                        {product.available ? (
-                          <button 
-                            onClick={() => addToCart(product)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 px-3.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1"
-                          >
-                            <Plus size={16} /> Ekle
-                          </button>
-                        ) : (
-                          <span className="text-xs bg-rose-950/40 text-rose-400 border border-rose-900/50 px-2.5 py-1 rounded-lg font-medium">
-                            Tükendi
+                    return (
+                      <div 
+                        key={product.id} 
+                        className={`p-3 rounded-2xl border flex flex-col justify-between transition-all relative ${
+                          !product.available 
+                            ? (darkMode ? 'bg-slate-900/40 border-slate-800/60 opacity-50' : 'bg-slate-200/60 border-slate-300 opacity-60') 
+                            : (darkMode ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 shadow-sm')
+                        }`}
+                      >
+                        {qty > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-emerald-500 text-slate-950 font-black text-xs w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-slate-950">
+                            {qty}
                           </span>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-                {cart.length > 0 && (
-                  <div className={`mt-6 p-4 rounded-2xl border shadow-xl ${darkMode ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-600/30'}`}>
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-                      <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-400">
-                        <ShoppingBag size={18} /> Sipariş Özeti
-                      </h3>
-                      <button onClick={clearCart} className="text-xs text-rose-400 hover:underline">Temizle</button>
-                    </div>
-
-                    <div className="py-3 space-y-2 max-h-40 overflow-y-auto pr-1">
-                      {cart.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-xs">
-                          <span className="font-medium text-slate-300">{item.name} x {item.qty}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold">{item.price * item.qty} ₺</span>
-                            <div className="flex items-center gap-1 bg-slate-800 rounded-lg border border-slate-700 px-1">
-                              <button onClick={() => removeFromCart(item.id)} className="px-1.5 py-0.5 text-slate-400 hover:text-white font-bold text-sm">-</button>
-                              <span className="px-1 text-xs">{item.qty}</span>
-                              <button onClick={() => addToCart(item)} className="px-1.5 py-0.5 text-slate-400 hover:text-white font-bold text-sm">+</button>
-                            </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-3xl p-2 bg-slate-800/40 rounded-xl border border-slate-700/30 inline-block">{product.icon}</span>
+                            <span className="text-[10px] text-slate-400 font-medium px-2 py-0.5 bg-slate-950/40 rounded-md">{product.category}</span>
+                          </div>
+                          <h3 className="font-bold text-xs leading-snug line-clamp-2 h-8">{product.name}</h3>
+                          <div className="mt-1">
+                            <span className="text-xs font-extrabold text-emerald-400 font-mono">{product.price} ₺</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
 
-                    <form onSubmit={handlePlaceOrder} className="mt-3 pt-3 border-t border-slate-800 space-y-3">
-                      <div>
-                        <label className="text-[11px] text-slate-400 font-semibold mb-1 block">Teslimat Yeri (Konum)</label>
-                        <select 
-                          value={location} 
-                          onChange={(e) => setLocation(e.target.value)}
-                          className={`w-full text-xs rounded-xl p-2.5 border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300'}`}
-                        >
-                          {LOCATIONS.map((loc, idx) => (
-                            <option key={idx} value={loc}>{loc}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <input 
-                          type="text" 
-                          placeholder="Özel Not (Örn: Çay açık olsun, şeker fazla)" 
-                          value={orderNote}
-                          onChange={(e) => setOrderNote(e.target.value)}
-                          className={`w-full text-xs rounded-xl p-2.5 border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300'}`}
-                        />
-                      </div>
-
-                      <div className="flex justify-between items-center pt-2">
-                        <div>
-                          <span className="text-xs text-slate-400 block">Toplam Tutar:</span>
-                          <span className="text-lg font-black text-emerald-400 font-mono">{getTotalCartAmount()} ₺</span>
+                        <div className="mt-3 pt-2 border-t border-slate-800/60">
+                          {product.available ? (
+                            <button 
+                              onClick={() => addToCart(product)}
+                              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-1"
+                            >
+                              <Plus size={14} /> Ekle
+                            </button>
+                          ) : (
+                            <span className="block text-center text-[11px] bg-rose-950/40 text-rose-400 border border-rose-900/50 py-1.5 rounded-lg font-medium">
+                              Tükendi
+                            </span>
+                          )}
                         </div>
-
-                        <button 
-                          type="submit"
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 active:scale-95 transition-all"
-                        >
-                          Siparişi Ver <ChevronRight size={16} />
-                        </button>
                       </div>
-                    </form>
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -1132,6 +1066,55 @@
             )}
 
           </main>
+
+          {/* En Altta Sabit Sipariş Ver Butonu ve Konum/Not Paneli (Sadece Sepette Ürün Varsa Görünür) */}
+          {cart.length > 0 && activeTab === 'user-order' && (
+            <div className="fixed bottom-16 left-0 right-0 z-30 px-4">
+              <div className={`max-w-md mx-auto p-3.5 rounded-2xl border shadow-2xl backdrop-blur-md ${darkMode ? 'bg-slate-900/95 border-emerald-500/40' : 'bg-white/95 border-emerald-600/40'}`}>
+                <form onSubmit={handlePlaceOrder} className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-400 font-semibold mb-0.5 block">Teslimat Yeri (Konum)</label>
+                      <select 
+                        value={location} 
+                        onChange={(e) => setLocation(e.target.value)}
+                        className={`w-full text-xs rounded-xl p-2 border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300'}`}
+                      >
+                        {LOCATIONS.map((loc, idx) => (
+                          <option key={idx} value={loc}>{loc}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 font-semibold mb-0.5 block">Özel Not (İsteğe bağlı)</label>
+                      <input 
+                        type="text" 
+                        placeholder="Örn: Şekerli olsun" 
+                        value={orderNote}
+                        onChange={(e) => setOrderNote(e.target.value)}
+                        className={`w-full text-xs rounded-xl p-2 border ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-1 border-t border-slate-800/60">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Toplam Tutar</span>
+                      <span className="text-base font-black text-emerald-400 font-mono">{getTotalCartAmount()} ₺</span>
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 active:scale-95 transition-all"
+                    >
+                      Siparişi Ver <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t ${darkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white border-slate-200'} backdrop-blur-md`}>
             <div className={`max-w-md mx-auto grid ${isAdminLoggedIn ? 'grid-cols-4' : 'grid-cols-2'} gap-1 p-2`}>
